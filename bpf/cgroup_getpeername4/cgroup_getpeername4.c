@@ -77,7 +77,7 @@ int cgroup_getpeername4_pod2svc(struct bpf_sock_addr *ctx) {
     __u16 tt = 8899;
     __u16 tt2 = 9988 ;
     if(_tmp_dst_port == tt || _tmp_dst_port == tt2){
-        bpf_printk("cgroup_getpeername4_pod2svc, pod dst_ip:port %x:%u",dst_ip, dst_port);
+        bpf_printk("cgroup_getpeername4_pod2svc, pod dst_ip:port %x:%u ,protocol:%u",dst_ip, dst_port, ctx->protocol);
         bpf_printk("cgroup_getpeername4_pod2svc, pod dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
         bpf_printk("cgroup_getpeername4_pod2svc, pod dst_ip:port %d.%d.%d.%d:%d", 
             (_tmp_dst_ip>> 24) & 0xFF, (_tmp_dst_ip>> 16) & 0xFF,(_tmp_dst_ip >> 8) & 0xFF, _tmp_dst_ip & 0xFF, _tmp_dst_port);

@@ -83,7 +83,7 @@ int cgroup_connect4_svc2pod(struct bpf_sock_addr *ctx) {
     __u16 _tmp_dst_port = __bpf_ntohs(dst_port);
     __u16 tt = 9988 ;
     if(_tmp_dst_port == tt){
-        bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port %x:%u",dst_ip, dst_port);
+        bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port %x:%u, protocol:%u",dst_ip, dst_port, ctx->protocol);
         bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
         bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port %d.%d.%d:%d:%d", 
             ((_tmp_dst_ip>> 24) & 0xFF), ((_tmp_dst_ip>> 16) & 0xFF),((_tmp_dst_ip >> 8) & 0xFF), (_tmp_dst_ip & 0xFF), _tmp_dst_port);
