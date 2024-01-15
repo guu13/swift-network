@@ -1,4 +1,4 @@
-package cgroup_connect4
+package cgroup_socklb
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 	"github.com/guu13/swift-network/pkg/types"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf cgroup_connect4.c -- -I../headers -I/usr/include/linux/
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go bpf cgroup_socklb.c -- -I../headers -I/usr/include/linux/
 
 type pad2uint8 [2]uint8
 
@@ -55,8 +55,6 @@ func InitLB4Bpf() {
 		log.Fatalf("failed to create bpf fs subpath: %+v", err)
 	}
 
-	ebpf.NewProgram()
-
 	// Load pre-compiled programs and maps into the kernel.
 	objs := bpfObjects{}
 	if err := loadBpfObjects(&objs, &ebpf.CollectionOptions{
@@ -89,6 +87,28 @@ func InitLB4Bpf() {
 		l.Close()
 	}
 	//defer l.Close()
+
+	// Link the count_egress_packets program to the cgroup.
+	linkPeer, err := link.AttachCgroup(link.CgroupOptions{
+		Path:    cgroupPath,
+		Attach:  ebpf.AttachCgroupInet4GetPeername,
+		Program: objs.CgroupGetpeername4Pod2svc,
+	})
+	if err != nil {
+		log.Fatal(err)
+		linkPeer.Close()
+	}
+
+	// Link the count_egress_packets program to the cgroup.
+	linkSendMsg, err := link.AttachCgroup(link.CgroupOptions{
+		Path:    cgroupPath,
+		Attach:  ebpf.AttachCGroupUDP4Sendmsg,
+		Program: objs.CgroupSendmsg4Svc2pod,
+	})
+	if err != nil {
+		log.Fatal(err)
+		linkSendMsg.Close()
+	}
 
 	svcip := net.IPv4(0x10, 0x10, 0x10, 0x10)
 

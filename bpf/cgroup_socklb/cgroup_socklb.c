@@ -59,6 +59,61 @@ struct bpf_map_def SEC("maps") sn_lb4_pod_map = {
     .map_flags = 1,
 };
 
+/* Hack due to missing narrow ctx access. */
+static __always_inline  __be16
+ctx_dst_port(const struct bpf_sock_addr *ctx)
+{
+	volatile __u32 dport = ctx->user_port;
+
+	return (__be16)dport;
+}
+
+SEC("cgroup/connect4")
+int cgroup_connect4_svc2pod(struct bpf_sock_addr *ctx) {
+    struct lb4_backend *backend;
+	struct lb4_service *svc;
+    __u32 dst_ip = ctx->user_ip4;
+	__u16 dst_port = ctx_dst_port(ctx) ;
+	struct lb4_key key = {
+		.address	= dst_ip, 
+		.dport		= dst_port,
+	}, orig_key = key;
+
+    __u32 _tmp_dst_ip = __bpf_ntohl(dst_ip);
+    __u16 _tmp_dst_port = __bpf_ntohs(dst_port);
+    __u16 tt = 9988 ;
+    if(_tmp_dst_port == tt){
+        bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port %x:%u, protocol:%u",dst_ip, dst_port, ctx->protocol);
+        bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
+        bpf_printk("cgroup_connect4_svc2pod, svc dst_ip:port %d.%d.%d:%d:%d", 
+            ((_tmp_dst_ip>> 24) & 0xFF), ((_tmp_dst_ip>> 16) & 0xFF),((_tmp_dst_ip >> 8) & 0xFF), (_tmp_dst_ip & 0xFF), _tmp_dst_port);
+    
+        //33558956:49954
+        ctx->user_ip4 = (__u32)33558956;
+        ctx->user_port = (__u32)49954;
+
+        _tmp_dst_ip = __bpf_ntohl(ctx->user_ip4);
+        _tmp_dst_port = __bpf_ntohs(ctx->user_port);
+        bpf_printk("cgroup_connect4_svc2pod, pod dst_ip:port %x:%u",ctx->user_ip4, ctx->user_port);
+        bpf_printk("cgroup_connect4_svc2pod, pod dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
+        bpf_printk("cgroup_connect4_svc2pod, pod dst_ip:port %d.%d.%d.%d:%d", 
+            ((_tmp_dst_ip>> 24) & 0xFF), ((_tmp_dst_ip>> 16) & 0xFF),((_tmp_dst_ip >> 8) & 0xFF), (_tmp_dst_ip & 0xFF), _tmp_dst_port);
+        
+        return 1;
+    }
+    
+    svc = bpf_map_lookup_elem(&sn_lb4_svc_map, &key);
+    if(svc)
+        return 1;
+
+    __u32 backend_id = (__u32)111;
+    backend = bpf_map_lookup_elem(&sn_lb4_pod_map, &backend_id);
+    if(svc)
+        return 1;
+
+    return 1;
+}
+
 SEC("cgroup/getpeername4")
 int cgroup_getpeername4_pod2svc(struct bpf_sock_addr *ctx) {
     struct lb4_backend *backend;
@@ -98,6 +153,36 @@ int cgroup_getpeername4_pod2svc(struct bpf_sock_addr *ctx) {
     svc = bpf_map_lookup_elem(&sn_lb4_svc_map, &key);
     if(svc)
         return 1;
+
+    return 1;
+}
+
+SEC("cgroup/sendmsg4")
+int cgroup_sendmsg4_svc2pod(struct bpf_sock_addr *ctx) {
+	
+	 __u32 dst_ip = ctx->user_ip4;
+	__u16 dst_port = (__u16)ctx->user_port ;
+
+    __u32 _tmp_dst_ip = __bpf_ntohl(dst_ip);
+    __u16 _tmp_dst_port = __bpf_ntohs(dst_port);
+    __u16 tt = 9988 ;
+    if(_tmp_dst_port == tt){
+        bpf_printk("cgroup_sendmsg4_svc2pod, svc dst_ip:port %x:%u, protocol:%u",dst_ip, dst_port, ctx->protocol);
+        bpf_printk("cgroup_sendmsg4_svc2pod, svc dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
+        bpf_printk("cgroup_sendmsg4_svc2pod, svc dst_ip:port %d.%d.%d:%d:%d", 
+            ((_tmp_dst_ip>> 24) & 0xFF), ((_tmp_dst_ip>> 16) & 0xFF),((_tmp_dst_ip >> 8) & 0xFF), (_tmp_dst_ip & 0xFF), _tmp_dst_port);
+    
+        //33558956:49954
+        ctx->user_ip4 = (__u32)33558956;
+        ctx->user_port = (__u32)49954;
+
+        _tmp_dst_ip = __bpf_ntohl(ctx->user_ip4);
+        _tmp_dst_port = __bpf_ntohs(ctx->user_port);
+        bpf_printk("cgroup_sendmsg4_svc2pod, pod dst_ip:port %x:%u",ctx->user_ip4, ctx->user_port);
+        bpf_printk("cgroup_sendmsg4_svc2pod, pod dst_ip:port ntoh %x:%u",_tmp_dst_ip, _tmp_dst_port);
+        bpf_printk("cgroup_sendmsg4_svc2pod, pod dst_ip:port %d.%d.%d.%d:%d", 
+            ((_tmp_dst_ip>> 24) & 0xFF), ((_tmp_dst_ip>> 16) & 0xFF),((_tmp_dst_ip >> 8) & 0xFF), (_tmp_dst_ip & 0xFF), _tmp_dst_port);
+    }
 
     return 1;
 }

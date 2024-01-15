@@ -106,7 +106,10 @@ int cgroup_connect4_svc2pod(struct bpf_sock_addr *ctx) {
     if(svc)
         return 1;
 
-    
+    __u32 backend_id = (__u32)111;
+    backend = bpf_map_lookup_elem(&sn_lb4_pod_map, &backend_id);
+    if(svc)
+        return 1;
 
 
 
