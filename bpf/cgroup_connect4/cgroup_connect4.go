@@ -83,8 +83,8 @@ func InitLB4Bpf() {
 		Program: objs.CgroupConnect4Svc2pod,
 	})
 	if err != nil {
-		log.Fatal(err)
 		l.Close()
+		log.Fatal(err)
 	}
 	//defer l.Close()
 

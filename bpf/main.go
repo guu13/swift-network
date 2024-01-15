@@ -8,6 +8,7 @@ import (
 
 func main() {
 
+	//sock
 	cgroup_socklb.InitLB4Bpf()
 
 	// Read loop reporting the total amount of times the kernel
