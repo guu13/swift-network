@@ -125,6 +125,5 @@ func detectCgroupPath() (string, error) {
 			return fields[1], nil
 		}
 	}
-
 	return "", errors.New("cgroup2 not mounted")
 }
