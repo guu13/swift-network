@@ -55,8 +55,6 @@ func InitLB4Bpf() {
 		log.Fatalf("failed to create bpf fs subpath: %+v", err)
 	}
 
-	ebpf.NewProgram()
-
 	// Load pre-compiled programs and maps into the kernel.
 	objs := bpfObjects{}
 	if err := loadBpfObjects(&objs, &ebpf.CollectionOptions{
