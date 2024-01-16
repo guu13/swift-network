@@ -62,6 +62,7 @@ func (r *EndpointReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *EndpointReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Endpoints{}).
 		Complete(r)

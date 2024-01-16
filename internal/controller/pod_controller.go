@@ -62,6 +62,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Pod{}).
 		Complete(r)

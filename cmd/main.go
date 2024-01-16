@@ -18,12 +18,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
-	"github.com/guu13/swift-network/pkg/maps/lbmap"
-
-	cgroup_sendmsg4 "github.com/guu13/swift-network/bpf/cgroup_connect4"
 	_ "github.com/guu13/swift-network/bpf/cgroup_skb"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -72,7 +68,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	cgroup_sendmsg4.InitLB4Bpf()
+	// cgroup_sendmsg4.InitLB4Bpf()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -105,12 +101,13 @@ func main() {
 	//	os.Exit(1)
 	//}
 
-	fmt.Println("start init lb map")
-	lbmap.Init()
-	if err := lbmap.Service4MapV2.OpenOrCreate(); err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("end init lb map")
+	// fmt.Println("start init lb map")
+	// lbmap.Init()
+	// if err := lbmap.Service4MapV2.OpenOrCreate(); err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println("end init lb map")
+
 	if err = (&controller.ServiceReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

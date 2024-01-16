@@ -19,12 +19,15 @@ package controller
 import (
 	"context"
 	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 // ServiceReconciler reconciles a Service object
@@ -46,9 +49,12 @@ type ServiceReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
+
+var action string
+
 func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log.FromContext(ctx)
-	fmt.Println("Service Reconcile", req.Namespace, req.Name)
+	fmt.Println("Service Reconcile", req.Namespace, req.Name, action)
 	// TODO(user): your logic here
 	service := new(v1.Service)
 	if err := r.Get(ctx, client.ObjectKey{Name: req.Name, Namespace: req.Namespace}, service); err != nil {
@@ -64,5 +70,29 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1.Service{}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(createEvent event.CreateEvent) bool {
+
+				action = "CreateFunc"
+				return true
+			},
+			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
+
+				action = "UpdateFunc"
+
+				newService := updateEvent.ObjectNew.(*v1.Service)
+				oldService := updateEvent.ObjectOld.(*v1.Service)
+
+				fmt.Println("UpdateFunc ", oldService, newService)
+				return true
+			},
+			DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
+
+				action = "UpdateFunc"
+
+				fmt.Println("DeleteFunc")
+				return true
+			},
+		}).
 		Complete(r)
 }
