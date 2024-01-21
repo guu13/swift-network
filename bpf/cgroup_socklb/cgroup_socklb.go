@@ -74,16 +74,17 @@ func InitLB4Bpf() {
 	copy(svckey.Address[:], svcip.To4())
 
 	// key: 10 10 10 10 10 00 10 00  08 08 00 00  value: 0d 00 00 00 0d 00 0d 00  03 03 00 00
-	if err := objs.SnLb4SvcMap.Lookup(svckey, svcValue); err != nil {
+	if err := objs.SnLb4SvcMap.Lookup(&svckey, &svcValue); err != nil {
 		log.Println(err)
 	}
 
 	svcValue = Service4Value{BackendID: uint32(13), Count: uint16(13), RevNat: uint16(13), Flags: uint8(3), Flags2: uint8(3)}
-	if err := objs.SnLb4SvcMap.Update(svckey, svcValue, ebpf.UpdateAny); err != nil {
+	if err := objs.SnLb4SvcMap.Update(&svckey, &svcValue, ebpf.UpdateAny); err != nil {
 		log.Println(err)
 	}
 
-	if err := objs.SnLb4SvcMap.Lookup(svckey, svcValue); err != nil {
+	rstValue := Service4Value{}
+	if err := objs.SnLb4SvcMap.Lookup(&svckey, &rstValue); err != nil {
 		log.Println(err)
 	}
 
