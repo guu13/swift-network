@@ -43,7 +43,7 @@ func InitLB4Bpf() {
 
 	svcValue := Service4Value{}
 
-	log.Println("cgroup_connect4 start ")
+	log.Println("cgroup_socklb start ")
 
 	// Allow the current process to lock memory for eBPF resources.
 	if err := rlimit.RemoveMemlock(); err != nil {
@@ -58,23 +58,45 @@ func InitLB4Bpf() {
 	// Load pre-compiled programs and maps into the kernel.
 	objs := bpfObjects{}
 	if err := loadBpfObjects(&objs, &ebpf.CollectionOptions{
-		Maps: ebpf.MapOptions{
-			// Pin the map to the BPF filesystem and configure the
-			// library to automatically re-write it in the BPF
-			// program so it can be re-used if it already exists or
-			// create it if not
-			PinPath: pinPath,
-		}}); err != nil {
+		Maps: ebpf.MapOptions{PinPath: pinPath},
+	}); err != nil {
 		log.Fatalf("loading objects: %v", err)
 	}
 	//defer objs.Close()
+
+	svcip := net.IPv4(0x10, 0x10, 0x10, 0x10)
+
+	svckey := Service4Key{
+		Port:        uint16(16),
+		Proto:       uint8(8),
+		Scope:       uint8(8),
+		BackendSlot: uint16(16)}
+	copy(svckey.Address[:], svcip.To4())
+
+	// key: 10 10 10 10 10 00 10 00  08 08 00 00  value: 0d 00 00 00 0d 00 0d 00  03 03 00 00
+	if err := objs.SnLb4SvcMap.Lookup(svckey, svcValue); err != nil {
+		log.Println(err)
+	}
+
+	svcValue = Service4Value{BackendID: uint32(13), Count: uint16(13), RevNat: uint16(13), Flags: uint8(3), Flags2: uint8(3)}
+	if err := objs.SnLb4SvcMap.Update(svckey, svcValue, ebpf.UpdateAny); err != nil {
+		log.Println(err)
+	}
+
+	if err := objs.SnLb4SvcMap.Lookup(svckey, svcValue); err != nil {
+		log.Println(err)
+	}
 
 	// Get the first-mounted cgroupv2 path.
 	cgroupPath, err := detectCgroupPath()
 	if err != nil {
 		log.Fatal(err)
 	}
+	//cgroupPath = cgroupPath + "/swift"
 	log.Println("detectCgroupPath ", cgroupPath)
+
+	objs.SnLb4SvcMap.Pin("/sys/fs/bpf/sn_map/sn_lb4svc_map")
+	objs.CgroupConnect4Svc2pod.Pin("/sys/fs/bpf/sn_map/sn_connect_prog")
 
 	// Link the count_egress_packets program to the cgroup.
 	l, err := link.AttachCgroup(link.CgroupOptions{
@@ -94,6 +116,7 @@ func InitLB4Bpf() {
 		Attach:  ebpf.AttachCgroupInet4GetPeername,
 		Program: objs.CgroupGetpeername4Pod2svc,
 	})
+
 	if err != nil {
 		log.Fatal(err)
 		linkPeer.Close()
@@ -109,25 +132,6 @@ func InitLB4Bpf() {
 		log.Fatal(err)
 		linkSendMsg.Close()
 	}
-
-	svcip := net.IPv4(0x10, 0x10, 0x10, 0x10)
-
-	svckey := Service4Key{
-		Port:        9988,
-		Proto:       uint8(6),
-		Scope:       uint8(1),
-		BackendSlot: uint16(0)}
-	copy(svckey.Address[:], svcip.To4())
-
-	if err := objs.SnLb4SvcMap.Lookup(svckey, svcValue); err != nil {
-		log.Println(err)
-	}
-
-	svcValue = Service4Value{BackendID: 1231231, Count: 3, RevNat: 4, Flags: 1, Flags2: 2}
-	if err := objs.SnLb4SvcMap.Update(svckey, svcValue, ebpf.UpdateAny); err != nil {
-		log.Println(err)
-	}
-
 }
 
 // detectCgroupPath returns the first-found mount point of type cgroup2

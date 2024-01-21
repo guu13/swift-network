@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/guu13/swift-network/internal/handler"
 
 	v1 "k8s.io/api/core/v1"
 
@@ -68,12 +69,14 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+
+	return ctrl.NewControllerManagedBy(mgr).Watches(&v1.Service{}, &handler.EnqueueRequestForCustom{}).
 		For(&v1.Service{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(createEvent event.CreateEvent) bool {
-
-				action = "CreateFunc"
+				newService := createEvent.Object.(*v1.Service)
+				action = "CreateFunc " + newService.Name
+				fmt.Println("CreateFunc")
 				return true
 			},
 			UpdateFunc: func(updateEvent event.UpdateEvent) bool {
@@ -88,7 +91,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 			DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
 
-				action = "UpdateFunc"
+				action = "DeleteFunc"
 
 				fmt.Println("DeleteFunc")
 				return true

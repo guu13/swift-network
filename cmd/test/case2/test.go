@@ -22,8 +22,10 @@ func main() {
 		Scheme: scheme,
 	})
 	// 2. init Reconciler（Controller）
+	ctrl.NewControllerManagedBy(mgr).Watches(&corev1.Service{}, &handler.EnqueueRequestForObject{}).Complete()
+
 	controller, _ := controller.New("myController", mgr, controller.Options{})
-	_ = controller.Watch(source.Kind{mgr.GetCache(), &corev1.Pod{}}, &handler.EnqueueRequestForObject{}, predicate.Funcs{
+	_ = controller.Watch(&source.Kind{mgr.GetCache(), &corev1.Pod{}}, &handler.EnqueueRequestForObject{}, predicate.Funcs{
 		CreateFunc: func(event event.CreateEvent) bool {
 
 			fmt.Println("CreateFunc")

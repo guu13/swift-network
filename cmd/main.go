@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"github.com/guu13/swift-network/bpf/cgroup_socklb"
 	"os"
 
 	_ "github.com/guu13/swift-network/bpf/cgroup_skb"
@@ -68,7 +69,8 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	// cgroup_sendmsg4.InitLB4Bpf()
+	//cgroup_connect4.InitLB4Bpf()
+	cgroup_socklb.InitLB4Bpf()
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -116,21 +118,21 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.EndpointReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GuuTest")
-		os.Exit(1)
-	}
-
-	if err = (&controller.PodReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "GuuTest")
-		os.Exit(1)
-	}
+	//if err = (&controller.EndpointReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "GuuTest")
+	//	os.Exit(1)
+	//}
+	//
+	//if err = (&controller.PodReconciler{
+	//	Client: mgr.GetClient(),
+	//	Scheme: mgr.GetScheme(),
+	//}).SetupWithManager(mgr); err != nil {
+	//	setupLog.Error(err, "unable to create controller", "controller", "GuuTest")
+	//	os.Exit(1)
+	//}
 
 	//+kubebuilder:scaffold:builder
 

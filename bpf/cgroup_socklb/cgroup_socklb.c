@@ -5,7 +5,7 @@
 
 char __license[] SEC("license") = "Dual MIT/GPL";
 
-
+// key: 10 10 10 10 04 27 00 00  06 01 00 00  value: 0d 00 00 00 0d 00 0d 00  03 03 00 00
 struct lb4_key {
 	__be32 address;		/* Service virtual IPv4 address */
 	__be16 dport;		/* L4 port filter, if unset, all ports apply */
